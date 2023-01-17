@@ -1,21 +1,112 @@
-import { Form, Formik } from "formik";
+import { Field, Form, Formik, useField, useFormikContext } from "formik";
 import React from "react";
 import getMakes from "../database/getMakes";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
+import router, { useRouter } from "next/router";
+import getModels from "../database/getModels";
+import { getAsString } from "../src/getAsString";
+import useSWR from "swr";
+import { Button } from "@mui/material";
 
-const HomePage = ({ makes }) => {
+const HomePage = ({ makes, models }) => {
+  const { query } = useRouter();
+  const initValues = {
+    make: getAsString(query.make) || "all",
+    model: getAsString(query.model) || "all",
+    minPrice: getAsString(query.minPrice) || "all",
+    maxPrice: getAsString(query.maxPrice) || "all",
+  };
+
+  const prices = [500, 1000, 5000, 15000, 25000, 50000, 250000];
+
   return (
     <div className="">
-      <Formik initialValues={{}}>
+      <Formik
+        initialValues={initValues}
+        onSubmit={(values) => {
+          router.push(
+            {
+              pathname: "/",
+              query: { ...values, page: 1 },
+            },
+            undefined,
+            { shallow: true }
+          );
+        }}
+      >
         {({ values }) => (
-          <Form>
-            <div className="m-10">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 shadow-md">
-                <div>Make</div>
-                <div>Model</div>
-                <div>Min</div>
-                <div>Max</div>
-              </div>
+          <Form className="container m-auto w-3/4 md:w-1/2 mt-10 pb-10 shadow-xl bg-gray-50">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 p-10 ">
+              <FormControl className="bg-white">
+                <InputLabel id="make">Make</InputLabel>
+                <Field
+                  name="make"
+                  as={Select}
+                  labelId="search-make"
+                  label="Make"
+                >
+                  <MenuItem value="all">
+                    <em>All Makes</em>
+                  </MenuItem>
+                  {makes?.map((make) => (
+                    <MenuItem value={make.make} key={make.make}>
+                      {`${make.make} (${make.count})`}
+                    </MenuItem>
+                  ))}
+                </Field>
+              </FormControl>
+
+              <ModelSelect make={values.make} name="model" models={models} />
+
+              <FormControl className="bg-white">
+                <InputLabel id="minPrice">Min Price</InputLabel>
+                <Field
+                  name="minPrice"
+                  as={Select}
+                  labelId="search-min"
+                  label=">Min Price"
+                >
+                  <MenuItem value="all">
+                    <em>No Min</em>
+                  </MenuItem>
+                  {prices?.map((price) => (
+                    <MenuItem value={price} key={price}>
+                      {price}
+                    </MenuItem>
+                  ))}
+                </Field>
+              </FormControl>
+
+              <FormControl className="bg-white">
+                <InputLabel id="maxPrice">Max Price</InputLabel>
+                <Field
+                  name="maxPrice"
+                  as={Select}
+                  labelId="search-max"
+                  label=">Max Price"
+                >
+                  <MenuItem value="all">
+                    <em>No Max</em>
+                  </MenuItem>
+                  {prices?.map((price) => (
+                    <MenuItem value={price} key={price}>
+                      {price}
+                    </MenuItem>
+                  ))}
+                </Field>
+              </FormControl>
             </div>
+
+            <Button
+              className="grid grid-cols-1 m-auto w-3/4 bg-[#1976d2]"
+              variant="contained"
+              type="submit"
+            >
+              SEARCH FOR CARS
+            </Button>
           </Form>
         )}
       </Formik>
@@ -23,9 +114,49 @@ const HomePage = ({ makes }) => {
   );
 };
 
+export function ModelSelect({ models, make, ...props }) {
+  const { setFieldValue } = useFormikContext();
+  const [field] = useField({
+    name: props.name,
+  });
+
+  const { data } = useSWR("/api/models?make=" + make, {
+    onSuccess: (newValues) => {
+      if (!newValues.map((a) => a.model).includes(field.value)) {
+        setFieldValue("model", "all");
+      }
+    },
+  });
+  const newModels = data || models;
+
+  return (
+    <FormControl className="bg-white">
+      <InputLabel id="model">Model</InputLabel>
+      <Select
+        name="model"
+        labelId="search-model"
+        label="Model"
+        {...field}
+        {...props}
+      >
+        <MenuItem value="all">
+          <em>All Models</em>
+        </MenuItem>
+        {newModels?.map((model) => (
+          <MenuItem value={model.model} key={model.model}>
+            {`${model.model} (${model.count})`}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
+}
+
 export default HomePage;
 
-export const getServerSideProps = async () => {
-  const makes = await getMakes();
-  return { props: { makes } };
+export const getServerSideProps = async (ctx) => {
+  const make = getAsString(ctx.query.make);
+  const [makes, models] = await Promise.all([getMakes(), getModels(make)]);
+
+  return { props: { makes, models } };
 };
