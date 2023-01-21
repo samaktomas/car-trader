@@ -11,7 +11,7 @@ import { getAsString } from "../src/getAsString";
 import useSWR from "swr";
 import { Button } from "@mui/material";
 
-const HomePage = ({ makes, models }) => {
+const Search = ({ makes, models }) => {
   const { query } = useRouter();
   const initValues = {
     make: getAsString(query.make) || "all",
@@ -23,94 +23,87 @@ const HomePage = ({ makes, models }) => {
   const prices = [500, 1000, 5000, 15000, 25000, 50000, 250000];
 
   return (
-    <div className="">
-      <Formik
-        initialValues={initValues}
-        onSubmit={(values) => {
-          router.push(
-            {
-              pathname: "/",
-              query: { ...values, page: 1 },
-            },
-            undefined,
-            { shallow: true }
-          );
-        }}
-      >
-        {({ values }) => (
-          <Form className="container m-auto w-3/4 md:w-1/2 mt-10 pb-10 shadow-xl bg-gray-50">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 p-10 ">
-              <FormControl className="bg-white">
-                <InputLabel id="make">Make</InputLabel>
-                <Field
-                  name="make"
-                  as={Select}
-                  labelId="search-make"
-                  label="Make"
-                >
-                  <MenuItem value="all">
-                    <em>All Makes</em>
+    <Formik
+      initialValues={initValues}
+      onSubmit={(values) => {
+        router.push(
+          {
+            pathname: "/cars",
+            query: { ...values, page: 1 },
+          },
+          undefined,
+          { shallow: true }
+        );
+      }}
+    >
+      {({ values }) => (
+        <Form className="container m-auto max-w-3xl py-10 shadow-xl bg-gray-50">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 p-10 ">
+            <FormControl className="bg-white">
+              <InputLabel id="make">Make</InputLabel>
+              <Field name="make" as={Select} labelId="search-make" label="Make">
+                <MenuItem value="all">
+                  <em>All Makes</em>
+                </MenuItem>
+                {makes?.map((make) => (
+                  <MenuItem value={make.make} key={make.make}>
+                    {`${make.make} (${make.count})`}
                   </MenuItem>
-                  {makes?.map((make) => (
-                    <MenuItem value={make.make} key={make.make}>
-                      {`${make.make} (${make.count})`}
-                    </MenuItem>
-                  ))}
-                </Field>
-              </FormControl>
+                ))}
+              </Field>
+            </FormControl>
 
-              <ModelSelect make={values.make} name="model" models={models} />
+            <ModelSelect make={values.make} name="model" models={models} />
 
-              <FormControl className="bg-white">
-                <InputLabel id="minPrice">Min Price</InputLabel>
-                <Field
-                  name="minPrice"
-                  as={Select}
-                  labelId="search-min"
-                  label=">Min Price"
-                >
-                  <MenuItem value="all">
-                    <em>No Min</em>
+            <FormControl className="bg-white">
+              <InputLabel id="minPrice">Min Price</InputLabel>
+              <Field
+                name="minPrice"
+                as={Select}
+                labelId="search-min"
+                label=">Min Price"
+              >
+                <MenuItem value="all">
+                  <em>No Min</em>
+                </MenuItem>
+                {prices?.map((price) => (
+                  <MenuItem value={price} key={price}>
+                    {price}
                   </MenuItem>
-                  {prices?.map((price) => (
-                    <MenuItem value={price} key={price}>
-                      {price}
-                    </MenuItem>
-                  ))}
-                </Field>
-              </FormControl>
+                ))}
+              </Field>
+            </FormControl>
 
-              <FormControl className="bg-white">
-                <InputLabel id="maxPrice">Max Price</InputLabel>
-                <Field
-                  name="maxPrice"
-                  as={Select}
-                  labelId="search-max"
-                  label=">Max Price"
-                >
-                  <MenuItem value="all">
-                    <em>No Max</em>
+            <FormControl className="bg-white">
+              <InputLabel id="maxPrice">Max Price</InputLabel>
+              <Field
+                name="maxPrice"
+                as={Select}
+                labelId="search-max"
+                label=">Max Price"
+              >
+                <MenuItem value="all">
+                  <em>No Max</em>
+                </MenuItem>
+                {prices?.map((price) => (
+                  <MenuItem value={price} key={price}>
+                    {price}
                   </MenuItem>
-                  {prices?.map((price) => (
-                    <MenuItem value={price} key={price}>
-                      {price}
-                    </MenuItem>
-                  ))}
-                </Field>
-              </FormControl>
-            </div>
+                ))}
+              </Field>
+            </FormControl>
+          </div>
 
-            <Button
-              className="grid grid-cols-1 m-auto w-3/4 bg-[#1976d2]"
-              variant="contained"
-              type="submit"
-            >
-              SEARCH FOR CARS
-            </Button>
-          </Form>
-        )}
-      </Formik>
-    </div>
+          <Button
+            className="grid grid-cols-1 m-auto w-3/4 bg-[#1976d2]"
+            variant="contained"
+            type="submit"
+          >
+            SEARCH FOR CARS
+          </Button>
+        </Form>
+      )}
+    </Formik>
   );
 };
 
@@ -121,6 +114,8 @@ export function ModelSelect({ models, make, ...props }) {
   });
 
   const { data } = useSWR("/api/models?make=" + make, {
+    // dedupingInterval: -> not call again the same url within one minute
+    dedupingInterval: 60000,
     onSuccess: (newValues) => {
       if (!newValues.map((a) => a.model).includes(field.value)) {
         setFieldValue("model", "all");
@@ -152,7 +147,7 @@ export function ModelSelect({ models, make, ...props }) {
   );
 }
 
-export default HomePage;
+export default Search;
 
 export const getServerSideProps = async (ctx) => {
   const make = getAsString(ctx.query.make);
