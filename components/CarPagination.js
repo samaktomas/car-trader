@@ -9,6 +9,7 @@ function CarPagination({ totalPages }) {
   const { query } = useRouter();
   return (
     <Pagination
+      className="pl-5 lg:pl-20 py-5"
       page={parseInt(getAsString(query.page) || "1")}
       count={totalPages}
       renderItem={(item) => (

@@ -24,11 +24,11 @@ function CarsList({ makes, models, cars, totalPages }) {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
-      <div className="lg:col-span-2 m-10">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 max-w-7xl mx-auto gap-10">
+      <div className="lg:col-span-2 mt-9">
         <Search makes={makes} models={models} />
       </div>
-      <div className="lg:col-span-3 my-10 mx-10 md:mr-10 md:ml-0">
+      <div className="lg:col-span-3 space-y-5">
         <CarPagination totalPages={data?.totalPages} />
         {data?.cars?.map((car) => (
           <CarCard key={car.id} car={car} />

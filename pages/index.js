@@ -37,7 +37,7 @@ const Search = ({ makes, models }) => {
       }}
     >
       {({ values }) => (
-        <Form className="container m-auto max-w-3xl py-10 shadow-xl bg-gray-50">
+        <Form className="container m-auto max-w-3xl mt-14 pb-10 shadow-xl bg-gray-50 sticky top-32">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 p-10 ">
             <FormControl className="bg-white">
               <InputLabel id="make">Make</InputLabel>
@@ -95,7 +95,7 @@ const Search = ({ makes, models }) => {
           </div>
 
           <Button
-            className="grid grid-cols-1 m-auto w-3/4 bg-[#1976d2]"
+            className="grid grid-cols-1 m-auto w-3/4 bg-[#1976d2] py-2 rounded-lg"
             variant="contained"
             type="submit"
           >
